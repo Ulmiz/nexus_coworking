@@ -6,13 +6,23 @@ use App\Models\Reservation;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ReservationConfirmed;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReservationController extends Controller
 {
     public function index()
     {
-        $reservations = Reservation::with(['user', 'room'])->get();
+        $reservations = Reservation::with(['user', 'room'])->orderBy('created_at', 'desc')->get();
         return view('reservations.index', compact('reservations'));
+    }
+
+    public function create(Request $request)
+    {
+        $rooms = Room::all();
+        $selectedRoomId = $request->query('room');
+        return view('reservations.create', compact('rooms', 'selectedRoomId'));
     }
 
     public function store(Request $request)
@@ -38,7 +48,7 @@ class ReservationController extends Controller
         $hours = (strtotime($request->end_time) - strtotime($request->start_time)) / 3600;
         $total_price = $hours * $room->price_per_hour;
 
-        Reservation::create([
+        $reservation = Reservation::create([
             'user_id' => Auth::id() ?? 1, // Fallback para pruebas si no hay auth
             'room_id' => $request->room_id,
             'start_time' => $request->start_time,
@@ -47,6 +57,16 @@ class ReservationController extends Controller
             'status' => 'confirmed',
         ]);
 
-        return redirect()->route('reservations.index')->with('success', 'Reserva creada exitosamente.');
+        // Generar PDF
+        $pdf = Pdf::loadView('pdf.reservation_receipt', compact('reservation'));
+        $pdfContent = $pdf->output();
+
+        // Enviar Email con PDF adjunto
+        // Se ejecuta solo si hay un usuario autenticado para no fallar en pruebas sin login
+        if (Auth::check()) {
+            Mail::to(Auth::user()->email)->send(new ReservationConfirmed($reservation, $pdfContent));
+        }
+
+        return redirect()->route('reservations.index')->with('success', 'Reserva creada exitosamente. Te hemos enviado un correo con el PDF.');
     }
 }
