@@ -47,7 +47,7 @@
                             </div>
 
                             <div class="mt-6 flex justify-between items-center pt-4 border-t border-gray-100">
-                                <a href="{{ route('reservations.index') }}?room={{ $room->id }}" class="text-indigo-600 hover:text-indigo-900 font-medium text-sm flex items-center transition-colors">
+                                <a href="{{ route('reservations.create') }}?room={{ $room->id }}" class="text-indigo-600 hover:text-indigo-900 font-medium text-sm flex items-center transition-colors">
                                     Reservar ahora
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

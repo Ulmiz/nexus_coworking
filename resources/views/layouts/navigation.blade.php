@@ -21,6 +21,11 @@
                     <x-nav-link :href="route('reservations.index')" :active="request()->routeIs('reservations.*')">
                         {{ __('Reservas') }}
                     </x-nav-link>
+                    @if(Auth::user()->role === 'admin')
+                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                        {{ __('Roles y Usuarios') }}
+                    </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -82,6 +87,11 @@
             <x-responsive-nav-link :href="route('reservations.index')" :active="request()->routeIs('reservations.*')">
                 {{ __('Reservas') }}
             </x-responsive-nav-link>
+            @if(Auth::user()->role === 'admin')
+            <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                {{ __('Roles y Usuarios') }}
+            </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

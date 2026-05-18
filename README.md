@@ -21,10 +21,46 @@ Sistema avanzado para la gestión de espacios de coworking, reservas de salas y 
 - **Staff:** staff@nexus.com / password
 - **Client:** client@nexus.com / password
 
+## Diagrama Entidad-Relación (DER)
+```mermaid
+erDiagram
+    USER ||--o{ RESERVATION : "makes"
+    ROOM ||--o{ RESERVATION : "has"
+
+    USER {
+        bigint id PK
+        string name
+        string email
+        string password
+        string role "admin, staff, client"
+        datetime deleted_at "Soft Deletes"
+    }
+
+    ROOM {
+        bigint id PK
+        string name
+        text description
+        integer capacity
+        decimal price_per_hour
+        datetime deleted_at "Soft Deletes"
+    }
+
+    RESERVATION {
+        bigint id PK
+        bigint user_id FK
+        bigint room_id FK
+        datetime start_time
+        datetime end_time
+        decimal total_price
+        string status "pending, confirmed, cancelled"
+        datetime deleted_at "Soft Deletes"
+    }
+```
+
 ## Estrategia de Commits (Historial Requerido)
 Para cumplir con los requisitos del proyecto (mínimo 10 commits lógicos), se ha estructurado el desarrollo de la siguiente manera:
 
-1. `feat: init laravel project with breeze, database sqlite and core models (Rooms, Reservations)` *(Commit Actual)*
+1. `feat: init laravel project with breeze, database sqlite and core models (Rooms, Reservations)`
 2. `feat: implement Rooms CRUD and soft deletes logic`
 3. `feat: implement Reservations logic with overlap validation`
 4. `feat: add AdminMiddleware and role-based access control`
