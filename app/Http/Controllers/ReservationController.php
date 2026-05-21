@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Models\User;
 use App\Http\Requests\Reservation\StoreReservationRequest;
 use App\Http\Requests\Reservation\UpdateReservationRequest;
 use App\Services\ReservationService;
@@ -56,8 +57,9 @@ $user = Auth::user();
     {
         $rooms = Room::all();
         $selectedRoomId = $request->query('room');
+        $users = Auth::user()->isAdmin() ? User::all() : collect();
         
-        return view('reservations.create', compact('rooms', 'selectedRoomId'));
+        return view('reservations.create', compact('rooms', 'selectedRoomId', 'users'));
     }
 
     /**
@@ -81,7 +83,7 @@ $user = Auth::user();
 
         // Crear reserva
         $reservation = Reservation::create([
-            'user_id' => Auth::id(),
+            'user_id' => Auth::user()->isAdmin() && $request->has('user_id') ? $request->user_id : Auth::id(),
             'room_id' => $room->id,
             'start_time' => $startTime,
             'end_time' => $endTime,
@@ -197,5 +199,35 @@ $user = Auth::user();
         return response($pdfContent, 200)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'attachment; filename="Comprobante_Reserva_' . $reservation->id . '.pdf"');
+    }
+
+    /**
+     * Elimina permanentemente una reserva cancelada (solo admin)
+     */
+    public function forceDestroy(Reservation $reservation)
+    {
+        Gate::authorize('forceDelete', $reservation);
+
+        if ($reservation->status !== 'cancelled') {
+            return back()->with('error', 'Solo se pueden eliminar reservas canceladas.');
+        }
+
+        $reservation->forceDelete();
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reserva eliminada permanentemente.');
+    }
+
+    /**
+     * Elimina todas las reservas canceladas (solo admin)
+     */
+    public function purgeCancelled()
+    {
+        Gate::authorize('isAdmin', Auth::user());
+
+        $count = Reservation::where('status', 'cancelled')->forceDelete();
+
+        return redirect()->route('reservations.index')
+            ->with('success', "Se eliminaron {$count} reservas canceladas.");
     }
 }

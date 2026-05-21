@@ -12,8 +12,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// User dashboard (requires auth + verified)
+// User dashboard (requires auth + verified) — admins get redirected to admin dashboard
 Route::get('/dashboard', function () {
+    if (Auth::check() && Auth::user()->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    }
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -24,8 +27,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Reservations (PDF route must be before resource to avoid conflicts)
+    // Reservations (PDF, cleanup routes must be before resource to avoid conflicts)
     Route::get('reservations/{reservation}/pdf', [ReservationController::class, 'pdf'])->name('reservations.pdf');
+    Route::delete('reservations/purge-cancelled', [ReservationController::class, 'purgeCancelled'])->name('reservations.purge-cancelled')->middleware('admin');
+    Route::delete('reservations/{reservation}/force-destroy', [ReservationController::class, 'forceDestroy'])->name('reservations.force-destroy')->middleware('admin');
     Route::resource('reservations', ReservationController::class);
 
     // Rooms
@@ -44,6 +49,7 @@ Route::middleware('auth')->group(function () {
 
         // Keep old /users route pointing to admin users view for backwards compat
         Route::get('/users', [AdminController::class, 'users'])->name('users.index');
+
     });
 });
 

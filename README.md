@@ -57,6 +57,22 @@ erDiagram
     }
 ```
 
+## Tareas Programadas (Cron)
+
+El sistema incluye un comando programado que envía recordatorios de reserva cada día a las 8:00 AM.
+
+Para activarlo, agrega esta línea al crontab del servidor:
+
+```
+* * * * * cd /ruta/del/proyecto && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Puedes probar el comando manualmente con:
+
+```
+php artisan reservations:send-reminders
+```
+
 ## Estrategia de Commits (Historial Requerido)
 Para cumplir con los requisitos del proyecto (mínimo 10 commits lógicos), se ha estructurado el desarrollo de la siguiente manera:
 

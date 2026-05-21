@@ -15,10 +15,8 @@
 
 <div class="flex min-h-screen">
 
-    <!-- Sidebar -->
     <aside class="w-[200px] min-h-screen bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0 bottom-0 z-30">
 
-        <!-- Brand -->
         <div class="px-5 pt-6 pb-5 border-b border-gray-100">
             <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-lg bg-[#0a192f] flex items-center justify-center text-white font-bold text-sm">N</div>
@@ -29,7 +27,6 @@
             </div>
         </div>
 
-        <!-- Navigation -->
         <nav class="flex-1 px-3 py-5 space-y-1">
             <a href="{{ route('admin.dashboard') }}"
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
@@ -65,7 +62,6 @@
             </a>
         </nav>
 
-        <!-- Bottom actions -->
         <div class="px-3 py-4 border-t border-gray-100 space-y-1">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -81,7 +77,6 @@
         </div>
     </aside>
 
-    <!-- Main content -->
     <main class="ml-[200px] flex-1 min-h-screen">
         {{ $slot }}
     </main>

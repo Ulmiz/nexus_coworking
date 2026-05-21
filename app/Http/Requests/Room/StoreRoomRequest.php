@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Room;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Validación para crear una nueva sala
@@ -21,7 +22,7 @@ class StoreRoomRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                'unique:rooms,name',
+                Rule::unique('rooms', 'name')->whereNull('deleted_at'),
             ],
             'description' => [
                 'nullable',

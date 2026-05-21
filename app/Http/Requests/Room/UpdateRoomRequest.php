@@ -25,7 +25,7 @@ class UpdateRoomRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('rooms', 'name')->ignore($roomId),
+                Rule::unique('rooms', 'name')->ignore($roomId)->whereNull('deleted_at'),
             ],
             'description' => [
                 'nullable',

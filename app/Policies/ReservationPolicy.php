@@ -57,4 +57,12 @@ class ReservationPolicy
     {
         return $user->isAdmin() || $user->id === $reservation->user_id;
     }
+
+    /**
+     * Solo admins pueden eliminar permanentemente una reserva cancelada
+     */
+    public function forceDelete(User $user, Reservation $reservation): bool
+    {
+        return $user->isAdmin();
+    }
 }

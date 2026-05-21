@@ -8,10 +8,22 @@
                 <p class="text-gray-500 text-lg">Gestiona tus espacios de trabajo y reuniones programadas.</p>
             </div>
             
-            <a href="{{ route('rooms.index') }}" class="bg-[#0a192f] hover:bg-gray-800 text-white font-semibold py-2.5 px-6 rounded-lg transition inline-flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
-                Nueva Reserva
-            </a>
+            <div class="flex items-center gap-3">
+                @if(Auth::user()->isAdmin())
+                <form action="{{ route('reservations.purge-cancelled') }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar permanentemente todas las reservas canceladas?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-600 font-semibold py-2.5 px-4 rounded-lg transition inline-flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        Limpiar Canceladas
+                    </button>
+                </form>
+                @endif
+                <a href="{{ route('rooms.index') }}" class="bg-[#0a192f] hover:bg-gray-800 text-white font-semibold py-2.5 px-6 rounded-lg transition inline-flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                    Nueva Reserva
+                </a>
+            </div>
         </div>
 
         @if (session('success'))
@@ -110,6 +122,15 @@
                                             @method('DELETE')
                                             <button type="submit" class="text-gray-400 hover:text-red-500 transition ml-2" title="Cancelar Reserva">
                                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </form>
+                                    @endif
+                                    @if(Auth::user()->isAdmin() && $status === 'cancelled')
+                                        <form action="{{ route('reservations.force-destroy', $reservation) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar permanentemente esta reserva cancelada?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-gray-300 hover:text-red-500 transition ml-2" title="Eliminar permanentemente">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                             </button>
                                         </form>
                                     @endif

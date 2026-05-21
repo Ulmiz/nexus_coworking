@@ -14,6 +14,14 @@ class UpdateReservationRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'start_time' => $this->start_time ? str_replace('T', ' ', $this->start_time) : null,
+            'end_time' => $this->end_time ? str_replace('T', ' ', $this->end_time) : null,
+        ]);
+    }
+
     public function rules(): array
     {
         $reservationId = $this->route('reservation')->id;

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\ReservationCancelled;
 use App\Mail\ReservationConfirmed;
 use App\Models\Reservation;
 use Illuminate\Support\Facades\Mail;
@@ -80,8 +81,9 @@ class EmailService
     public function sendCancellationNotification(Reservation $reservation): bool
     {
         try {
-            $content = "Tu reserva en {$reservation->room->name} ha sido cancelada.";
-            
+            Mail::to($reservation->user->email)
+                ->send(new ReservationCancelled($reservation));
+
             Log::info('Notificación de cancelación enviada', [
                 'reservation_id' => $reservation->id,
                 'user_email' => $reservation->user->email,

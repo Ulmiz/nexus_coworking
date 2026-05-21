@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                    <a href="{{ Auth::user()->isAdmin() ? route('admin.dashboard') : route('dashboard') }}" class="flex items-center gap-2">
                         <div class="w-8 h-8 bg-[#0a192f] rounded-md flex items-center justify-center">
                             <svg class="w-4 h-4 text-[#00E5C0]" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2l2.5 5.5L18 8l-4 3.5L15 17l-5-3-5 3 1-5.5L2 8l5.5-.5L10 2z"/></svg>
                         </div>
@@ -22,7 +22,10 @@
                 <a href="{{ route('reservations.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('reservations.*') ? 'border-[#007060] text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
                     {{ __('Mis Reservas') }}
                 </a>
-                @if(Auth::user()->role === 'admin')
+                @if(Auth::user()->isAdmin())
+                <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.*') ? 'border-[#007060] text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
+                    {{ __('Admin') }}
+                </a>
                 <a href="{{ route('users.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('users.*') ? 'border-[#007060] text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
                     {{ __('Roles y Usuarios') }}
                 </a>
@@ -92,7 +95,10 @@
             <x-responsive-nav-link :href="route('reservations.index')" :active="request()->routeIs('reservations.*')">
                 {{ __('Reservas') }}
             </x-responsive-nav-link>
-            @if(Auth::user()->role === 'admin')
+            @if(Auth::user()->isAdmin())
+            <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
+                {{ __('Admin') }}
+            </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                 {{ __('Roles y Usuarios') }}
             </x-responsive-nav-link>

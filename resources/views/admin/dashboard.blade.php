@@ -1,7 +1,6 @@
 <x-admin-layout>
     <div class="px-8 py-8">
 
-        <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-[#0a192f] tracking-tight">Dashboard Overview</h1>
@@ -14,9 +13,7 @@
             </div>
         </div>
 
-        <!-- Stats Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-            <!-- Total Users -->
             <div class="bg-white rounded-2xl p-6 border border-gray-100 flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Usuarios</p>
@@ -28,7 +25,6 @@
                 </div>
             </div>
 
-            <!-- Total Reservas -->
             <div class="bg-white rounded-2xl p-6 border border-gray-100 flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Reservas Hoy</p>
@@ -40,7 +36,6 @@
                 </div>
             </div>
 
-            <!-- Total Salas -->
             <div class="bg-white rounded-2xl p-6 border border-gray-100 flex items-center justify-between">
                 <div>
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Salas Activas</p>
@@ -53,10 +48,8 @@
             </div>
         </div>
 
-        <!-- Quick Actions + Daily Schedule -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
 
-            <!-- Quick Actions -->
             <div class="space-y-4">
                 <h2 class="text-lg font-bold text-[#0a192f]">Acciones Rápidas</h2>
                 <a href="{{ route('admin.rooms') }}"
@@ -77,7 +70,6 @@
                 </a>
             </div>
 
-            <!-- Daily Schedule -->
             <div class="md:col-span-2 bg-white rounded-2xl border border-gray-100 p-6">
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="text-lg font-bold text-[#0a192f]">Agenda de Hoy</h2>
@@ -112,7 +104,6 @@
             </div>
         </div>
 
-        <!-- Room Management -->
         <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
                 <h2 class="text-lg font-bold text-[#0a192f]">Gestión de Salas</h2>

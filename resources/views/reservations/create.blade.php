@@ -35,6 +35,21 @@
                     <form method="POST" action="{{ route('reservations.store') }}" class="space-y-6">
                         @csrf
 
+                        @if(Auth::user()->isAdmin())
+                        <!-- User Selection (admin only) -->
+                        <div>
+                            <x-input-label for="user_id" :value="__('Selecciona un Usuario')" class="text-gray-700 font-semibold" />
+                            <select id="user_id" name="user_id" class="block mt-2 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm transition-shadow" required>
+                                <option value="" disabled {{ old('user_id') ? '' : 'selected' }}>Selecciona un usuario</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                        {{ $user->name }} ({{ $user->email }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
+
                         <!-- Room Selection -->
                         <div>
                             <x-input-label for="room_id" :value="__('Selecciona una Sala')" class="text-gray-700 font-semibold" />
