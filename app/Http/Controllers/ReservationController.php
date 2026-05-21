@@ -4,89 +4,198 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\Room;
+use App\Http\Requests\Reservation\StoreReservationRequest;
+use App\Http\Requests\Reservation\UpdateReservationRequest;
+use App\Services\ReservationService;
+use App\Services\PDFService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\ReservationConfirmed;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Gate;
+use Carbon\Carbon;
 
+/**
+ * Controlador de Reservas
+ * Gestiona todas las operaciones CRUD de reservas
+ */
 class ReservationController extends Controller
 {
+    public function __construct(
+        private ReservationService $reservationService,
+        private PDFService $pdfService,
+        private EmailService $emailService
+    ) {}
+
+    /**
+     * Muestra la lista de reservas paginadas
+     */
     public function index()
     {
-        $reservations = Reservation::with(['user', 'room'])->orderBy('created_at', 'desc')->paginate(10);
+       /** @var \App\Models\User $user */
+$user = Auth::user();
+        
+        // Los clientes ven solo sus reservas, admins ven todas
+        if ($user->isAdmin()) {
+            $reservations = Reservation::with(['user', 'room'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+        } else {
+            $reservations = $user->reservations()
+                ->with(['room'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+        }
+
         return view('reservations.index', compact('reservations'));
     }
 
+    /**
+     * Muestra el formulario para crear una nueva reserva
+     */
     public function create(Request $request)
     {
         $rooms = Room::all();
         $selectedRoomId = $request->query('room');
+        
         return view('reservations.create', compact('rooms', 'selectedRoomId'));
     }
 
-    public function store(Request $request)
+    /**
+     * Almacena una nueva reserva en la base de datos
+     */
+    public function store(StoreReservationRequest $request)
     {
-        $request->validate([
-            'room_id' => 'required|exists:rooms,id',
-            'start_time' => 'required|date|after:now',
-            'end_time' => 'required|date|after:start_time',
-        ], [
-            'room_id.required' => 'Debes seleccionar una sala.',
-            'room_id.exists' => 'La sala seleccionada no es válida.',
-            'start_time.required' => 'La fecha y hora de inicio son obligatorias.',
-            'start_time.date' => 'El formato de la fecha de inicio es incorrecto.',
-            'start_time.after' => 'La hora de inicio debe ser posterior a la fecha y hora actual.',
-            'end_time.required' => 'La fecha y hora de fin son obligatorias.',
-            'end_time.date' => 'El formato de la fecha de fin es incorrecto.',
-            'end_time.after' => 'La hora de término debe ser posterior a la hora de inicio.',
-        ]);
+        $room = Room::findOrFail($request->room_id);
+        $startTime = Carbon::createFromFormat('Y-m-d H:i', $request->start_time);
+        $endTime = Carbon::createFromFormat('Y-m-d H:i', $request->end_time);
 
-        // Validación de cruce de horarios
-        $exists = Reservation::where('room_id', $request->room_id)
-            ->where(function ($query) use ($request) {
-                $query->whereBetween('start_time', [$request->start_time, $request->end_time])
-                      ->orWhereBetween('end_time', [$request->start_time, $request->end_time]);
-            })->exists();
-
-        if ($exists) {
-            return back()->withErrors(['overlap' => 'La sala ya está reservada en ese horario.']);
+        // Validar disponibilidad de la sala
+        if (!$this->reservationService->isRoomAvailable($room, $startTime, $endTime)) {
+            return back()->withErrors([
+                'overlap' => 'La sala ya está reservada en ese horario. Por favor elige otro horario.',
+            ])->withInput();
         }
 
-        $room = Room::find($request->room_id);
-        $hours = (strtotime($request->end_time) - strtotime($request->start_time)) / 3600;
-        $total_price = $hours * $room->price_per_hour;
+        // Calcular precio
+        $totalPrice = $this->reservationService->calculatePrice($room, $startTime, $endTime);
 
+        // Crear reserva
         $reservation = Reservation::create([
-            'user_id' => Auth::id() ?? 1, // Fallback para pruebas si no hay auth
-            'room_id' => $request->room_id,
-            'start_time' => $request->start_time,
-            'end_time' => $request->end_time,
-            'total_price' => $total_price,
+            'user_id' => Auth::id(),
+            'room_id' => $room->id,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'total_price' => $totalPrice,
             'status' => 'confirmed',
         ]);
 
         // Generar PDF
-        $pdf = Pdf::loadView('pdf.reservation_receipt', compact('reservation'));
-        $pdfContent = $pdf->output();
+        $pdfContent = $this->pdfService->generateReservationReceipt($reservation);
 
-        // Enviar Email con PDF adjunto
-        // Se ejecuta solo si hay un usuario autenticado para no fallar en pruebas sin login
-        if (Auth::check()) {
-            Mail::to(Auth::user()->email)->send(new ReservationConfirmed($reservation, $pdfContent));
+        // Enviar email
+        $this->emailService->sendReservationConfirmation($reservation, $pdfContent);
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reserva creada exitosamente. Te hemos enviado un correo con el comprobante.');
+    }
+
+    /**
+     * Muestra los detalles de una reserva específica
+     */
+    public function show(Reservation $reservation)
+    {
+        Gate::authorize('view', $reservation);
+        
+        $reservation->load(['user', 'room']);
+        
+        return view('reservations.show', compact('reservation'));
+    }
+
+    /**
+     * Muestra el formulario para editar una reserva
+     */
+    public function edit(Reservation $reservation)
+    {
+        Gate::authorize('update', $reservation);
+        
+        if (!$reservation->canBeEdited()) {
+            return back()->with('error', 'No se puede editar una reserva que ya ha comenzado.');
         }
 
-        return redirect()->route('reservations.index')->with('success', 'Reserva creada exitosamente. Te hemos enviado un correo con el PDF.');
+        $rooms = Room::all();
+        $reservation->load(['user', 'room']);
+        
+        return view('reservations.edit', compact('reservation', 'rooms'));
     }
-    // Cancelar reserva (cambia estado a cancelled)
+
+    /**
+     * Actualiza una reserva existente
+     */
+    public function update(UpdateReservationRequest $request, Reservation $reservation)
+    {
+        Gate::authorize('update', $reservation);
+
+        if (!$reservation->canBeEdited()) {
+            return back()->with('error', 'No se puede editar una reserva que ya ha comenzado.');
+        }
+
+        $room = Room::findOrFail($request->room_id ?? $reservation->room_id);
+        $startTime = Carbon::createFromFormat('Y-m-d H:i', $request->start_time ?? $reservation->start_time);
+        $endTime = Carbon::createFromFormat('Y-m-d H:i', $request->end_time ?? $reservation->end_time);
+
+        // Validar disponibilidad (excluir la reserva actual)
+        if (!$this->reservationService->isRoomAvailable($room, $startTime, $endTime, $reservation)) {
+            return back()->withErrors([
+                'overlap' => 'La sala no está disponible en ese horario.',
+            ])->withInput();
+        }
+
+        // Calcular nuevo precio
+        $totalPrice = $this->reservationService->calculatePrice($room, $startTime, $endTime);
+
+        // Actualizar reserva
+        $reservation->update([
+            'room_id' => $room->id,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'total_price' => $totalPrice,
+            'status' => $request->status ?? $reservation->status,
+        ]);
+
+        return redirect()->route('reservations.show', $reservation)
+            ->with('success', 'Reserva actualizada exitosamente.');
+    }
+
+    /**
+     * Cancela una reserva (soft delete lógico - cambia estado)
+     */
     public function destroy(Reservation $reservation)
     {
-        // Solo permite cancelar si aún no ha terminado
-        $now = now();
-        if ($reservation->end_time->isPast()) {
+        Gate::authorize('delete', $reservation);
+
+        if (!$reservation->canBeCancelled()) {
             return back()->with('error', 'No se puede cancelar una reserva que ya ha finalizado.');
         }
+
         $reservation->update(['status' => 'cancelled']);
-        return back()->with('success', 'Reserva cancelada exitosamente.');
+        
+        $this->emailService->sendCancellationNotification($reservation);
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reserva cancelada exitosamente.');
+    }
+
+    /**
+     * Descarga el PDF de la reserva
+     */
+    public function pdf(Reservation $reservation)
+    {
+        Gate::authorize('viewPDF', $reservation);
+
+        $pdfContent = $this->pdfService->generateReservationReceipt($reservation);
+
+        return response($pdfContent, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="Comprobante_Reserva_' . $reservation->id . '.pdf"');
     }
 }

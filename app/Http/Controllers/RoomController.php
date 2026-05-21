@@ -3,37 +3,91 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
-use Illuminate\Http\Request;
+use App\Http\Requests\Room\StoreRoomRequest;
+use App\Http\Requests\Room\UpdateRoomRequest;
+use Illuminate\Support\Facades\Gate;
 
+/**
+ * Controlador de Salas
+ * Gestiona todas las operaciones CRUD de salas de coworking
+ */
 class RoomController extends Controller
 {
+    /**
+     * Muestra la lista de todas las salas disponibles
+     */
     public function index()
     {
-        $rooms = Room::all();
+        $rooms = Room::orderBy('name')->get();
         return view('rooms.index', compact('rooms'));
     }
 
+    /**
+     * Muestra el formulario para crear una nueva sala
+     */
     public function create()
     {
+        Gate::authorize('create', Room::class);
+        
         return view('rooms.create');
     }
 
-    public function store(Request $request)
+    /**
+     * Almacena una nueva sala en la base de datos
+     */
+    public function store(StoreRoomRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'capacity' => 'required|integer|min:1',
-            'price_per_hour' => 'required|numeric|min:0',
-        ]);
+        Gate::authorize('create', Room::class);
 
-        Room::create($request->all());
+        Room::create($request->validated());
 
-        return redirect()->route('rooms.index')->with('success', 'Sala creada exitosamente.');
+        return redirect()->route('rooms.index')
+            ->with('success', 'Sala creada exitosamente.');
     }
 
+    /**
+     * Muestra los detalles de una sala específica
+     */
+    public function show(Room $room)
+    {
+        $room->load(['reservations']);
+        return view('rooms.show', compact('room'));
+    }
+
+    /**
+     * Muestra el formulario para editar una sala
+     */
+    public function edit(Room $room)
+    {
+        Gate::authorize('update', $room);
+        
+        return view('rooms.edit', compact('room'));
+    }
+
+    /**
+     * Actualiza una sala existente
+     */
+    public function update(UpdateRoomRequest $request, Room $room)
+    {
+        Gate::authorize('update', $room);
+
+        $room->update($request->validated());
+
+        return redirect()->route('rooms.show', $room)
+            ->with('success', 'Sala actualizada exitosamente.');
+    }
+
+    /**
+     * Elimina una sala (soft delete)
+     */
     public function destroy(Room $room)
     {
-        $room->delete(); // Soft Delete
-        return redirect()->route('rooms.index')->with('success', 'Sala eliminada (soft delete).');
+        Gate::authorize('delete', $room);
+
+        $room->delete();
+
+        return redirect()->route('rooms.index')
+            ->with('success', 'Sala eliminada exitosamente.');
     }
 }
+
