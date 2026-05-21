@@ -1,11 +1,60 @@
 <x-admin-layout>
     <div class="px-8 py-8">
 
+        @if(Auth::user()->isStaff())
+            <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-yellow-800 text-sm flex items-center gap-3">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                No tenés permisos para gestionar usuarios. Solo administradores.
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-[#0a192f] tracking-tight">Gestión de Usuarios</h1>
                 <p class="text-gray-400 text-sm mt-1">Administra el acceso y los roles de los miembros del espacio.</p>
+            </div>
+            @if(Auth::user()->isAdmin())
+            <button onclick="document.getElementById('createUserModal').classList.remove('hidden')" class="bg-[#007060] hover:bg-[#005a4d] text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Nuevo Usuario
+            </button>
+            @endif
+        </div>
+
+        <!-- Create User Modal -->
+        <div id="createUserModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-[#0a192f]">Crear Usuario</h2>
+                    <button onclick="document.getElementById('createUserModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <form method="POST" action="{{ route('users.store') }}" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre</label>
+                        <input type="text" name="name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#007060]/30">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Correo</label>
+                        <input type="email" name="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#007060]/30">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
+                        <input type="text" name="password" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#007060]/30">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Rol</label>
+                        <select name="role" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#007060]/30">
+                            <option value="client">Miembro</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-[#007060] hover:bg-[#005a4d] text-white font-semibold py-2 rounded-lg transition">Crear Usuario</button>
+                </form>
             </div>
         </div>
 
@@ -69,22 +118,33 @@
                                         {{ $roleLabel }}
                                     </span>
                                 </td>
-                                <td class="py-4 px-6">
-                                    @if($user->id !== Auth::id())
-                                    <form action="{{ route('users.update', $user) }}" method="POST" class="flex items-center gap-2">
-                                        @csrf
-                                        @method('PATCH')
-                                        <select name="role"
-                                                class="border border-gray-200 text-sm rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#007060]/30 focus:border-[#007060] transition">
-                                            <option value="client" {{ $user->role === 'client' ? 'selected' : '' }}>Miembro</option>
-                                            <option value="staff"  {{ $user->role === 'staff'  ? 'selected' : '' }}>Staff</option>
-                                            <option value="admin"  {{ $user->role === 'admin'  ? 'selected' : '' }}>Admin</option>
-                                        </select>
-                                        <button type="submit"
-                                                class="bg-[#007060] hover:bg-[#005a4d] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
-                                            Guardar
-                                        </button>
-                                    </form>
+                                 <td class="py-4 px-6">
+                                    @if(Auth::user()->isStaff())
+                                        <span class="text-xs text-gray-300 italic">Sin acceso</span>
+                                    @elseif($user->id !== Auth::id())
+                                    <div class="flex items-center gap-2">
+                                        <form action="{{ route('users.update', $user) }}" method="POST" class="flex items-center gap-2">
+                                            @csrf
+                                            @method('PATCH')
+                                            <select name="role"
+                                                    class="border border-gray-200 text-sm rounded-lg px-3 py-1.5 text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#007060]/30 focus:border-[#007060] transition">
+                                                <option value="client" {{ $user->role === 'client' ? 'selected' : '' }}>Miembro</option>
+                                                <option value="staff"  {{ $user->role === 'staff'  ? 'selected' : '' }}>Staff</option>
+                                                <option value="admin"  {{ $user->role === 'admin'  ? 'selected' : '' }}>Admin</option>
+                                            </select>
+                                            <button type="submit"
+                                                    class="bg-[#007060] hover:bg-[#005a4d] text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                                                Guardar
+                                            </button>
+                                        </form>
+                                        <form action="{{ route('users.destroy', $user) }}" method="POST" class="inline" onsubmit="return confirm('¿Eliminar a {{ $user->name }}? Esta acción no se puede deshacer.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-gray-300 hover:text-red-500 transition" title="Eliminar usuario">
+                                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                     @else
                                         <span class="text-xs text-gray-300 italic">Tu cuenta</span>
                                     @endif

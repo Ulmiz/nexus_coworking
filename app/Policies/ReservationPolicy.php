@@ -65,4 +65,17 @@ class ReservationPolicy
     {
         return $user->isAdmin();
     }
+
+    /**
+     * El propietario o admin puede eliminar una reserva finalizada
+     */
+    public function deleteCompleted(User $user, Reservation $reservation): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->id === $reservation->user_id &&
+               $reservation->end_time->isPast();
+    }
 }

@@ -7,6 +7,9 @@
                 <p class="text-gray-400 text-sm mt-1">Bienvenido, {{ Auth::user()->name }}. Aquí está lo que ocurre hoy.</p>
             </div>
             <div class="flex items-center gap-3">
+                @if(Auth::user()->isStaff())
+                    <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full">Staff</span>
+                @endif
                 <div class="w-9 h-9 rounded-full bg-[#0a192f] flex items-center justify-center text-white font-bold text-sm">
                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                 </div>

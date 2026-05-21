@@ -31,9 +31,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Room::class, RoomPolicy::class);
         Gate::policy(Reservation::class, ReservationPolicy::class);
 
-        // Gate helper para verificar si es admin
+        // Gate helper para verificar si es admin o staff
         Gate::define('isAdmin', function (User $user) {
-            return $user->isAdmin();
+            return $user->isAdmin() || $user->isStaff();
         });
 
         // Gate helper para verificar si puede reservar

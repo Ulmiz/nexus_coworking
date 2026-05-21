@@ -59,11 +59,6 @@
                         </div>
                         @error('price_per_hour')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 mb-1.5">Descripción (opcional)</label>
-                        <textarea name="description" rows="2" placeholder="Descripción breve de la sala..."
-                                  class="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#007060]/30 focus:border-[#007060] transition resize-none">{{ old('description') }}</textarea>
-                    </div>
                     <button type="submit"
                             class="w-full bg-[#007060] hover:bg-[#005a4d] text-white font-semibold py-2.5 rounded-xl transition text-sm">
                         Guardar Sala

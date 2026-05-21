@@ -57,6 +57,61 @@ erDiagram
     }
 ```
 
+## Despliegue en InfinityFree
+
+### Datos de conexión (guardar)
+| Recurso | Valor |
+|---------|-------|
+| Dominio | https://j5csvuzl.infinityfree.com |
+| FTP host | ftpupload.net |
+| FTP user | if0_41979766 |
+| MySQL host | sql208.infinityfree.com |
+| MySQL user | if0_41979766 |
+| Volumen | vol10_1 |
+
+### Pasos
+
+1. **Abrí FileZilla Client** y conectate:
+   - Host: `ftpupload.net`
+   - Usuario: `if0_41979766`
+   - Contraseña: la que pusiste al crear la cuenta
+   - Puerto: `21`
+
+2. **Subí los archivos**:
+   - En FileZilla, del lado izquierdo (tu PC) navegá a la carpeta del proyecto
+   - Del lado derecho (servidor) andá a `htdocs/`
+   - Seleccioná **todo** (Ctrl+A) y arrastrá a la derecha
+   - Esperá que termine (puede tardar varios minutos)
+
+3. **Crear base de datos MySQL**:
+   - En el panel de InfinityFree → **MySQL Databases**
+   - Creá una base de datos con nombre: `if0_41979766_nexus`
+   - Anotá la contraseña que pongas
+
+4. **Configurar `.env`**:
+   - En el panel → **File Manager** → navegá a `htdocs/`
+   - Renombrá `.env.infinityfree` a `.env`
+   - Editá `.env` y cambiá `CAMBIA_ESTA_CONTRASENA` por la contraseña real de MySQL
+
+5. **Ajustar Document Root**:
+   - En el panel → **Settings** → **Root Domain** → cambialo a `/public`
+   - Si no te deja, ya está el `.htaccess` en la raíz que redirige automáticamente
+
+6. **Ejecutar migraciones**:
+   - En el panel → **PHP Command Line**
+   - Escribí: `php artisan migrate --seed`
+   - Si no funciona, importá manualmente via **phpMyAdmin**: abrí la BD, click **Import**, seleccioná el archivo SQL
+
+7. **Activar cron** (para los recordatorios automáticos):
+   - En el panel → **Cron Jobs**
+   - Agregá: `php /home/vol10_1/htdocs/artisan reservations:send-reminders`
+   - Frecuencia: una vez al día (Daily)
+
+8. **Probar**: Andá a https://j5csvuzl.infinityfree.com y probá con:
+   - Admin: admin@nexus.com / password
+   - Staff: staff@nexus.com / password
+   - Client: client@nexus.com / password
+
 ## Tareas Programadas (Cron)
 
 El sistema incluye un comando programado que envía recordatorios de reserva cada día a las 8:00 AM.

@@ -22,10 +22,12 @@
                 <a href="{{ route('reservations.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('reservations.*') ? 'border-[#007060] text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
                     {{ __('Mis Reservas') }}
                 </a>
-                @if(Auth::user()->isAdmin())
+                @if(Auth::user()->isAdmin() || Auth::user()->isStaff())
                 <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('admin.*') ? 'border-[#007060] text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
                     {{ __('Admin') }}
                 </a>
+                @endif
+                @if(Auth::user()->isAdmin())
                 <a href="{{ route('users.index') }}" class="inline-flex items-center px-1 pt-1 border-b-2 {{ request()->routeIs('users.*') ? 'border-[#007060] text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} text-sm font-medium leading-5 transition duration-150 ease-in-out">
                     {{ __('Roles y Usuarios') }}
                 </a>
@@ -95,10 +97,12 @@
             <x-responsive-nav-link :href="route('reservations.index')" :active="request()->routeIs('reservations.*')">
                 {{ __('Reservas') }}
             </x-responsive-nav-link>
-            @if(Auth::user()->isAdmin())
+            @if(Auth::user()->isAdmin() || Auth::user()->isStaff())
             <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.*')">
                 {{ __('Admin') }}
             </x-responsive-nav-link>
+            @endif
+            @if(Auth::user()->isAdmin())
             <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
                 {{ __('Roles y Usuarios') }}
             </x-responsive-nav-link>

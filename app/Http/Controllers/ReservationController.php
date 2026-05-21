@@ -57,7 +57,9 @@ $user = Auth::user();
     {
         $rooms = Room::all();
         $selectedRoomId = $request->query('room');
-        $users = Auth::user()->isAdmin() ? User::all() : collect();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $users = $user->isAdmin() ? User::all() : collect();
         
         return view('reservations.create', compact('rooms', 'selectedRoomId', 'users'));
     }
@@ -68,6 +70,8 @@ $user = Auth::user();
     public function store(StoreReservationRequest $request)
     {
         $room = Room::findOrFail($request->room_id);
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
         $startTime = Carbon::createFromFormat('Y-m-d H:i', $request->start_time);
         $endTime = Carbon::createFromFormat('Y-m-d H:i', $request->end_time);
 
@@ -83,7 +87,7 @@ $user = Auth::user();
 
         // Crear reserva
         $reservation = Reservation::create([
-            'user_id' => Auth::user()->isAdmin() && $request->has('user_id') ? $request->user_id : Auth::id(),
+            'user_id' => $user->isAdmin() && $request->has('user_id') ? $request->user_id : Auth::id(),
             'room_id' => $room->id,
             'start_time' => $startTime,
             'end_time' => $endTime,
@@ -216,6 +220,23 @@ $user = Auth::user();
 
         return redirect()->route('reservations.index')
             ->with('success', 'Reserva eliminada permanentemente.');
+    }
+
+    /**
+     * Elimina una reserva finalizada (propietario o admin)
+     */
+    public function destroyCompleted(Reservation $reservation)
+    {
+        Gate::authorize('deleteCompleted', $reservation);
+
+        if ($reservation->status !== 'confirmed' || !$reservation->end_time->isPast()) {
+            return back()->with('error', 'Solo se pueden eliminar reservas finalizadas.');
+        }
+
+        $reservation->forceDelete();
+
+        return redirect()->route('reservations.index')
+            ->with('success', 'Reserva finalizada eliminada correctamente.');
     }
 
     /**

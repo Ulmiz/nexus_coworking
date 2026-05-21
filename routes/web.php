@@ -12,9 +12,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// User dashboard (requires auth + verified) — admins get redirected to admin dashboard
+// User dashboard — admins/staff get redirected to admin dashboard
 Route::get('/dashboard', function () {
-    if (Auth::check() && Auth::user()->isAdmin()) {
+    if (Auth::check() && (Auth::user()->isAdmin() || Auth::user()->isStaff())) {
         return redirect()->route('admin.dashboard');
     }
     return view('dashboard');
@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
     Route::get('reservations/{reservation}/pdf', [ReservationController::class, 'pdf'])->name('reservations.pdf');
     Route::delete('reservations/purge-cancelled', [ReservationController::class, 'purgeCancelled'])->name('reservations.purge-cancelled')->middleware('admin');
     Route::delete('reservations/{reservation}/force-destroy', [ReservationController::class, 'forceDestroy'])->name('reservations.force-destroy')->middleware('admin');
+    Route::delete('reservations/{reservation}/delete-completed', [ReservationController::class, 'destroyCompleted'])->name('reservations.delete-completed');
     Route::resource('reservations', ReservationController::class);
 
     // Rooms
@@ -44,8 +45,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/admin/rooms',   [AdminController::class, 'rooms'])->name('admin.rooms');
         Route::get('/admin/users',   [AdminController::class, 'users'])->name('admin.users');
 
-        // Role management (PATCH)
+        // User management
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
         Route::patch('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
         // Keep old /users route pointing to admin users view for backwards compat
         Route::get('/users', [AdminController::class, 'users'])->name('users.index');
