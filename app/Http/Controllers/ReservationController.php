@@ -14,7 +14,7 @@ class ReservationController extends Controller
 {
     public function index()
     {
-        $reservations = Reservation::with(['user', 'room'])->orderBy('created_at', 'desc')->get();
+        $reservations = Reservation::with(['user', 'room'])->orderBy('created_at', 'desc')->paginate(10);
         return view('reservations.index', compact('reservations'));
     }
 
@@ -31,6 +31,15 @@ class ReservationController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'start_time' => 'required|date|after:now',
             'end_time' => 'required|date|after:start_time',
+        ], [
+            'room_id.required' => 'Debes seleccionar una sala.',
+            'room_id.exists' => 'La sala seleccionada no es válida.',
+            'start_time.required' => 'La fecha y hora de inicio son obligatorias.',
+            'start_time.date' => 'El formato de la fecha de inicio es incorrecto.',
+            'start_time.after' => 'La hora de inicio debe ser posterior a la fecha y hora actual.',
+            'end_time.required' => 'La fecha y hora de fin son obligatorias.',
+            'end_time.date' => 'El formato de la fecha de fin es incorrecto.',
+            'end_time.after' => 'La hora de término debe ser posterior a la hora de inicio.',
         ]);
 
         // Validación de cruce de horarios
@@ -68,5 +77,16 @@ class ReservationController extends Controller
         }
 
         return redirect()->route('reservations.index')->with('success', 'Reserva creada exitosamente. Te hemos enviado un correo con el PDF.');
+    }
+    // Cancelar reserva (cambia estado a cancelled)
+    public function destroy(Reservation $reservation)
+    {
+        // Solo permite cancelar si aún no ha terminado
+        $now = now();
+        if ($reservation->end_time->isPast()) {
+            return back()->with('error', 'No se puede cancelar una reserva que ya ha finalizado.');
+        }
+        $reservation->update(['status' => 'cancelled']);
+        return back()->with('success', 'Reserva cancelada exitosamente.');
     }
 }

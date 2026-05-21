@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Admin – NexusSpace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-[#F4F6F9] min-h-screen">
+
+<div class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-[200px] min-h-screen bg-white border-r border-gray-100 flex flex-col fixed left-0 top-0 bottom-0 z-30">
+
+        <!-- Brand -->
+        <div class="px-5 pt-6 pb-5 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-[#0a192f] flex items-center justify-center text-white font-bold text-sm">N</div>
+                <div>
+                    <p class="font-bold text-[#0a192f] text-sm leading-tight">Nexus Admin</p>
+                    <p class="text-xs text-gray-400">Downtown HQ</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-3 py-5 space-y-1">
+            <a href="{{ route('admin.dashboard') }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
+                      {{ request()->routeIs('admin.dashboard') ? 'bg-[#E0F2F1] text-[#007060] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#0a192f]' }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" /></svg>
+                Overview
+            </a>
+            <a href="{{ route('reservations.index') }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
+                      {{ request()->routeIs('reservations.*') ? 'bg-[#E0F2F1] text-[#007060] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#0a192f]' }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                Reservas
+            </a>
+            <a href="{{ route('admin.rooms') }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
+                      {{ request()->routeIs('admin.rooms') ? 'bg-[#E0F2F1] text-[#007060] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#0a192f]' }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                Salas
+            </a>
+            <a href="{{ route('users.index') }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition
+                      {{ request()->routeIs('users.*') ? 'bg-[#E0F2F1] text-[#007060] font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-[#0a192f]' }}">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                Usuarios
+            </a>
+        </nav>
+
+        <!-- Bottom: logout + help -->
+        <div class="px-3 py-4 border-t border-gray-100 space-y-1">
+            <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600 transition">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Help Center
+            </a>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:bg-red-50 hover:text-red-500 transition">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                    Cerrar Sesión
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-[200px] flex-1 min-h-screen">
+        {{ $slot }}
+    </main>
+
+</div>
+</body>
+</html>
