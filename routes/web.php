@@ -70,17 +70,17 @@ Route::middleware('auth')->group(function () {
     });
 }); // Cierre del grupo de rutas 'auth'
 
-// ── Ruta Mágica para arreglar la base de datos de Railway en vivo ──
 Route::get('/arreglar-nexus', function () {
     try {
-        DB::table('users')->update(['email_verified_at' => now()]);
-        DB::table('notifications')->truncate();
         
+        Artisan::call('migrate', ['--force' => true]);
+        
+        // 2. Limpia los cachés de Laravel
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
         Artisan::call('route:clear');
         
-        return "¡Nexus arreglado! Usuarios verificados, notificaciones limpias y caché en cero.";
+        return "¡Nexus arreglado! Las tablas que faltaban (incluyendo notifications) han sido creadas con éxito.";
     } catch (\Exception $e) {
         return "Error al arreglar: " . $e->getMessage();
     }
