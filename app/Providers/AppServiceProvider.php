@@ -10,6 +10,7 @@ use App\Policies\RoomPolicy;
 use App\Policies\ReservationPolicy;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL; // <-- OJO: Se agregó esta línea aquí arriba
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // --- NUEVO: Forzar HTTPS en producción ---
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+        // -----------------------------------------
+
         // Registrar Policies
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Room::class, RoomPolicy::class);
@@ -42,4 +49,3 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 }
-
