@@ -7,8 +7,10 @@ use App\Models\Room;
 use App\Models\User;
 use App\Http\Requests\Reservation\StoreReservationRequest;
 use App\Http\Requests\Reservation\UpdateReservationRequest;
-use App\Notifications\ReservationCancelled;
-use App\Notifications\ReservationConfirmed;
+// --- CORREGIDO: Se importan las clases correctas de correo (Mail) ---
+use App\Mail\ReservationCancelled;
+use App\Mail\ReservationConfirmed;
+// -------------------------------------------------------------------
 use App\Services\ReservationService;
 use App\Services\PDFService;
 use App\Services\EmailService;
@@ -36,7 +38,7 @@ class ReservationController extends Controller
     public function index()
     {
        /** @var \App\Models\User $user */
-$user = Auth::user();
+        $user = Auth::user();
         
         // Los clientes ven solo sus reservas, admins ven todas
         if ($user->isAdmin()) {
@@ -101,15 +103,15 @@ $user = Auth::user();
         // Generar PDF
         $pdfContent = $this->pdfService->generateReservationReceipt($reservation);
 
-        // Notificación en app
-        $reservation->user->notify(new ReservationConfirmed($reservation));
-
-        if ($this->emailService->sendReservationConfirmation($reservation, $pdfContent)) {
+        // --- CORREGIDO: Envío seguro de correos envuelto en Try/Catch para evitar Errores 500 ---
+        try {
+            $this->emailService->sendReservationConfirmation($reservation, $pdfContent);
             $message = 'Reserva creada exitosamente. Te hemos enviado un correo con el comprobante.';
-        } else {
-            $message = 'Reserva creada, pero no se pudo enviar el correo. Revisa la configuración de email.';
-            Log::warning('Email de confirmación no enviado para reserva: ' . $reservation->id);
+        } catch (\Exception $e) {
+            Log::error('Error al enviar correo de confirmación: ' . $e->getMessage());
+            $message = 'Reserva creada exitosamente, pero hubo un detalle al enviar el correo.';
         }
+        // -------------------------------------------------------------------------------------
 
         return redirect()->route('reservations.index')
             ->with('success', $message);
@@ -183,7 +185,7 @@ $user = Auth::user();
     }
 
     /**
-     * Cancela una reserva (soft delete lógico - cambia estado)
+     * Cancela una reserva
      */
     public function destroy(Reservation $reservation)
     {
@@ -195,15 +197,15 @@ $user = Auth::user();
 
         $reservation->update(['status' => 'cancelled']);
 
-        // Notificación en app
-        $reservation->user->notify(new ReservationCancelled($reservation));
-
-        if ($this->emailService->sendCancellationNotification($reservation)) {
+        // --- CORREGIDO: Envío seguro de cancelación ---
+        try {
+            $this->emailService->sendCancellationNotification($reservation);
             $message = 'Reserva cancelada exitosamente.';
-        } else {
-            $message = 'Reserva cancelada, pero no se pudo enviar la notificación. Revisa la configuración de email.';
-            Log::warning('Email de cancelación no enviado para reserva: ' . $reservation->id);
+        } catch (\Exception $e) {
+            Log::error('Error al enviar correo de cancelación: ' . $e->getMessage());
+            $message = 'Reserva cancelada exitosamente, pero no se pudo enviar el correo de aviso.';
         }
+        // ----------------------------------------------
 
         return redirect()->route('reservations.index')
             ->with('success', $message);
