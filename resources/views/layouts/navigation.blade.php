@@ -37,11 +37,31 @@
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
                 <!-- Notification Bell -->
-                <button class="text-gray-400 hover:text-gray-500 focus:outline-none transition">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </button>
+                <div x-data="notificationBell()" class="relative">
+                    <button @click="toggle()" class="relative text-gray-400 hover:text-gray-500 focus:outline-none transition">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span x-show="count > 0" x-text="count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 min-w-[16px] flex items-center justify-center px-1"></span>
+                    </button>
+                    <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-y-auto">
+                        <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-700">Notificaciones</span>
+                            <button x-show="count > 0" @click="markAllRead()" class="text-xs text-blue-600 hover:text-blue-800">Marcar todas como leídas</button>
+                        </div>
+                        <template x-if="notifications.length === 0">
+                            <div class="p-4 text-center text-sm text-gray-500">No hay notificaciones</div>
+                        </template>
+                        <template x-for="notif in notifications" :key="notif.id">
+                            <div class="p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer relative group" :class="{'bg-blue-50': !notif.read_at}" @click="markRead(notif.id)">
+                                <button @click.stop="deleteNotif(notif.id)" class="absolute top-1 right-1 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition text-xs p-0.5" title="Eliminar">&times;</button>
+                                <div class="text-sm font-medium text-gray-800 pr-4" x-text="notif.data.title"></div>
+                                <div class="text-xs text-gray-500 mt-1" x-text="notif.data.message"></div>
+                                <div class="text-xs text-gray-400 mt-1" x-text="timeAgo(notif.created_at)"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
 
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -135,3 +155,50 @@
         </div>
     </div>
 </nav>
+
+<script>
+function notificationBell() {
+    return {
+        open: false,
+        count: 0,
+        notifications: [],
+        init() {
+            this.fetchNotifications();
+        },
+        toggle() {
+            this.open = !this.open;
+            if (this.open) this.fetchNotifications();
+        },
+        fetchNotifications() {
+            fetch('/notifications')
+                .then(r => r.json())
+                .then(data => {
+                    this.notifications = data.notifications || [];
+                    this.count = data.count;
+                });
+        },
+        markRead(id) {
+            fetch(`/notifications/${id}/read`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content } })
+                .then(() => this.fetchNotifications());
+        },
+        markAllRead() {
+            fetch('/notifications/read-all', { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content } })
+                .then(() => this.fetchNotifications());
+        },
+        deleteNotif(id) {
+            fetch(`/notifications/${id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content } })
+                .then(() => this.fetchNotifications());
+        },
+        timeAgo(date) {
+            const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            if (seconds < 60) return 'ahora';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `hace ${minutes} min`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `hace ${hours}h`;
+            const days = Math.floor(hours / 24);
+            return `hace ${days}d`;
+        }
+    }
+}
+</script>

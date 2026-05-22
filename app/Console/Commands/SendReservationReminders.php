@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Reservation;
+use App\Notifications\ReservationReminder;
 use App\Services\PDFService;
 use App\Services\EmailService;
 use Carbon\Carbon;
@@ -64,6 +65,9 @@ class SendReservationReminders extends Command
                     $errorCount++;
                     continue;
                 }
+
+                // Notificación en app
+                $reservation->user->notify(new ReservationReminder($reservation));
 
                 // Generar PDF
                 $pdfContent = $this->pdfService->generateReservationReceipt($reservation);

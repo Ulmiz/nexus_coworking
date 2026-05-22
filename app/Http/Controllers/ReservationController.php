@@ -7,6 +7,8 @@ use App\Models\Room;
 use App\Models\User;
 use App\Http\Requests\Reservation\StoreReservationRequest;
 use App\Http\Requests\Reservation\UpdateReservationRequest;
+use App\Notifications\ReservationCancelled;
+use App\Notifications\ReservationConfirmed;
 use App\Services\ReservationService;
 use App\Services\PDFService;
 use App\Services\EmailService;
@@ -99,6 +101,9 @@ $user = Auth::user();
         // Generar PDF
         $pdfContent = $this->pdfService->generateReservationReceipt($reservation);
 
+        // Notificación en app
+        $reservation->user->notify(new ReservationConfirmed($reservation));
+
         if ($this->emailService->sendReservationConfirmation($reservation, $pdfContent)) {
             $message = 'Reserva creada exitosamente. Te hemos enviado un correo con el comprobante.';
         } else {
@@ -189,6 +194,9 @@ $user = Auth::user();
         }
 
         $reservation->update(['status' => 'cancelled']);
+
+        // Notificación en app
+        $reservation->user->notify(new ReservationCancelled($reservation));
 
         if ($this->emailService->sendCancellationNotification($reservation)) {
             $message = 'Reserva cancelada exitosamente.';
