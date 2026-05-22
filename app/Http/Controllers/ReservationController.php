@@ -13,6 +13,7 @@ use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 /**
@@ -98,11 +99,15 @@ $user = Auth::user();
         // Generar PDF
         $pdfContent = $this->pdfService->generateReservationReceipt($reservation);
 
-        // Enviar email
-        $this->emailService->sendReservationConfirmation($reservation, $pdfContent);
+        if ($this->emailService->sendReservationConfirmation($reservation, $pdfContent)) {
+            $message = 'Reserva creada exitosamente. Te hemos enviado un correo con el comprobante.';
+        } else {
+            $message = 'Reserva creada, pero no se pudo enviar el correo. Revisa la configuración de email.';
+            Log::warning('Email de confirmación no enviado para reserva: ' . $reservation->id);
+        }
 
         return redirect()->route('reservations.index')
-            ->with('success', 'Reserva creada exitosamente. Te hemos enviado un correo con el comprobante.');
+            ->with('success', $message);
     }
 
     /**
@@ -184,11 +189,16 @@ $user = Auth::user();
         }
 
         $reservation->update(['status' => 'cancelled']);
-        
-        $this->emailService->sendCancellationNotification($reservation);
+
+        if ($this->emailService->sendCancellationNotification($reservation)) {
+            $message = 'Reserva cancelada exitosamente.';
+        } else {
+            $message = 'Reserva cancelada, pero no se pudo enviar la notificación. Revisa la configuración de email.';
+            Log::warning('Email de cancelación no enviado para reserva: ' . $reservation->id);
+        }
 
         return redirect()->route('reservations.index')
-            ->with('success', 'Reserva cancelada exitosamente.');
+            ->with('success', $message);
     }
 
     /**
