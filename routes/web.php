@@ -7,6 +7,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Artisan;
 
 // Welcome page
 Route::get('/', function () {
@@ -15,12 +18,16 @@ Route::get('/', function () {
 
 // User dashboard — admins/staff get redirected to admin dashboard
 Route::get('/dashboard', function () {
-    if (Auth::check() && (Auth::user()->isAdmin() || Auth::user()->isStaff())) {
+    /** @var \App\Models\User $user */
+    $user = Auth::user();
+    
+    if ($user && ($user->isAdmin() || $user->isStaff())) {
         return redirect()->route('admin.dashboard');
     }
     return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
+// Bloque de rutas protegidas para usuarios autenticados
 Route::middleware('auth')->group(function () {
 
     // Notifications
@@ -61,6 +68,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/users', [AdminController::class, 'users'])->name('users.index');
 
     });
+}); // Cierre del grupo de rutas 'auth'
+
+// ── Ruta Mágica para arreglar la base de datos de Railway en vivo ──
+Route::get('/arreglar-nexus', function () {
+    try {
+        DB::table('users')->update(['email_verified_at' => now()]);
+        DB::table('notifications')->truncate();
+        
+        Artisan::call('config:clear');
+        Artisan::call('cache:clear');
+        Artisan::call('route:clear');
+        
+        return "¡Nexus arreglado! Usuarios verificados, notificaciones limpias y caché en cero.";
+    } catch (\Exception $e) {
+        return "Error al arreglar: " . $e->getMessage();
+    }
 });
 
 require __DIR__.'/auth.php';
